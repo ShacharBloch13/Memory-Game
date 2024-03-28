@@ -2,11 +2,45 @@ import pygame
 import sys
 import random
 
+def select_difficulty(screen, button_font):
+    title_font = pygame.font.SysFont(None, 60)  # Increased font size for the title
+    button_font = pygame.font.SysFont(None, 50)  # Increased font size for button labels
+    title_text = "Select Difficulty"
+    difficulties = ["Easy", "Mid", "Hard"]
+    button_width = 300  # Increase the width for better fit in the larger window
+    button_height = 100  # Increase the height for more substantial buttons
+    button_start_y = 200  # Starting Y position of the first button
+    button_margin = 30  # Space between buttons
+    options_rects = [pygame.Rect(screen_width / 2 - button_width / 2, button_start_y + i * (button_height + button_margin), button_width, button_height) for i in range(3)]
+
+    running = True
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                for i, rect in enumerate(options_rects):
+                    if rect.collidepoint(event.pos):
+                        return difficulties[i]
+        
+        screen.fill(bg_color)
+        title_surf = title_font.render(title_text, True, button_text_color)
+        title_rect = title_surf.get_rect(center=(screen_width / 2, 100))
+        screen.blit(title_surf, title_rect)
+        for i, rect in enumerate(options_rects):
+            pygame.draw.rect(screen, reset_button_color, rect)
+            difficulty_surf = button_font.render(difficulties[i], True, button_text_color)
+            difficulty_rect = difficulty_surf.get_rect(center=rect.center)
+            screen.blit(difficulty_surf, difficulty_rect)
+        
+        pygame.display.flip()
+
 
 pygame.init()
 pygame.mixer.init()
 
-screen_width, screen_height = 640, 480
+screen_width, screen_height = 900, 675
 screen = pygame.display.set_mode((screen_width, screen_height))
 
 
@@ -32,16 +66,31 @@ matched_cards = []
 game_over = False
 
 
+background_image = pygame.image.load('nuggets.png')
+background_image = pygame.transform.scale(background_image, (screen_width, screen_height))
 card_images = [pygame.transform.scale(pygame.image.load(f'image{i}.png'), card_size) for i in range(1, 7)] * 2
 success_sound = pygame.mixer.Sound('success.mp3')
 failure_sound = pygame.mixer.Sound('failure.mp3')
 random.shuffle(card_images)
 
+difficulty = select_difficulty(screen, button_font)
+image_count = 6 if difficulty == "Easy" else 8 if difficulty == "Mid" else 10
+card_images = [pygame.transform.scale(pygame.image.load(f'image{i}.png'), (100, 100)) for i in range(1, image_count + 1)] * 2
+random.shuffle(card_images)
+
+cards_horizontal = 4
+cards_vertical = (image_count * 2) // cards_horizontal
+top_offset = 50
+game_over = False
+selected_cards = []
+matched_cards = []
+start_ticks = pygame.time.get_ticks()
+
 start_ticks = pygame.time.get_ticks()
 
 running = True
 while running:
-    screen.fill(bg_color)
+    screen.blit(background_image, (0, 0))
     seconds = (pygame.time.get_ticks() - start_ticks) // 1000
     minutes = seconds // 60
     seconds = seconds % 60
