@@ -4,7 +4,7 @@ import random
 
 
 pygame.init()
-
+pygame.mixer.init()
 
 screen_width, screen_height = 640, 480
 screen = pygame.display.set_mode((screen_width, screen_height))
@@ -30,7 +30,9 @@ card_images = []
 for i in range(1, 7):  
     img = pygame.image.load(f'image{i}.png')
     img = pygame.transform.scale(img, card_size)
-    card_images.extend([img, img])  
+    card_images.extend([img, img])
+success_sound = pygame.mixer.Sound('success.mp3')
+failure_sound = pygame.mixer.Sound('failure.mp3')  
 
 random.shuffle(card_images)
 
@@ -56,8 +58,10 @@ while running:
                 if len(selected_cards) == 2:
                     if card_images[selected_cards[0]] == card_images[selected_cards[1]]:
                         matched_cards.extend(selected_cards)
+                        success_sound.play()
                     else:
                         pygame.time.wait(500)
+                        failure_sound.play()
                     selected_cards = []
 
 
