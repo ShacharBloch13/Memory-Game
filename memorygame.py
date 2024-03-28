@@ -19,6 +19,7 @@ card_size = (100, 100)
 cards_horizontal = 4
 cards_vertical = 3
 margin = 20
+top_offset = 30
 cards = []
 selected_cards = []
 matched_cards = []
@@ -33,18 +34,20 @@ for i in range(1, 7):
 
 random.shuffle(card_images)
 
+start_ticks = pygame.time.get_ticks()
 
 running = True
 while running:
+    seconds = (pygame.time.get_ticks() - start_ticks) // 1000
+    minutes = seconds // 60
+    seconds = seconds % 60
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
         if event.type == pygame.MOUSEBUTTONDOWN and not game_over:
             x, y = pygame.mouse.get_pos()
-            # Calculate which column and row the click is in
             column = x // (card_size[0] + margin)
-            row = y // (card_size[1] + margin)
-            # Calculate the index of the card in the grid
+            row = (y - top_offset) // (card_size[1] + margin)
             index = row * cards_horizontal + column
             if (index < len(card_images) and 
                 index not in matched_cards and 
@@ -54,7 +57,7 @@ while running:
                     if card_images[selected_cards[0]] == card_images[selected_cards[1]]:
                         matched_cards.extend(selected_cards)
                     else:
-                        pygame.time.wait(500)  # Wait half a second to show cards before flipping back
+                        pygame.time.wait(500)
                     selected_cards = []
 
 
@@ -62,10 +65,10 @@ while running:
 
     screen.fill(bg_color)
 
-    cards = []
+    #cards = []
     for x in range(cards_horizontal):
         for y in range(cards_vertical):
-            rect = pygame.Rect(x * (card_size[0] + margin) + margin, y * (card_size[1] + margin) + margin, *card_size)
+            rect = pygame.Rect(x * (card_size[0] + margin) + margin, y * (card_size[1] + margin) + margin + top_offset, *card_size)
             cards.append(rect)
             if len(matched_cards) == len(card_images) or game_over:
                 screen.blit(card_images[cards_horizontal * y + x], rect)
@@ -80,6 +83,11 @@ while running:
         text_surf = font.render('You Win!', True, (255, 215, 0))
         text_rect = text_surf.get_rect(center=(screen_width / 2, screen_height / 2))
         screen.blit(text_surf, text_rect)
+
+    font = pygame.font.SysFont(None, 36)
+    timer_surf = font.render(f'Time: {minutes:02}:{seconds:02}', True, (255, 255, 255))
+    timer_rect = timer_surf.get_rect(topleft=(10, 10))
+    screen.blit(timer_surf, timer_rect)
 
     pygame.display.flip()
 
