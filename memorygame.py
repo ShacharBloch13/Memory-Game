@@ -146,14 +146,6 @@ if mode == 3:
             overlay.fill((0, 0, 0, 128))  # Adjust the alpha to make it more or less transparent
             screen.blit(overlay, (0, 0))
 
-            
-
-
-    
-
-
-
-
 
 current_player = 1  # Tracks the current player (1 or 2)
 player_turns = {1: "Player 1's Turn", 2: "Player 2's Turn"}
@@ -268,10 +260,21 @@ while running:
             index = y * cards_horizontal + x
             if index in matched_cards:
                 screen.blit(card_images[index], rect)
+                card_number_text = f"{index + 1}"
             elif index in selected_cards:
                 screen.blit(card_images[index], rect)
+                card_number_text = f"{index + 1}"
             else:
                 pygame.draw.rect(screen, hidden_card_color, rect)
+                card_number_text = f"{index + 1}"
+            
+            # Create a text surface for the number
+            num_font = pygame.font.SysFont(None, 24)  # Smaller font for the number
+            num_text_surf = num_font.render(card_number_text, True, (0, 0, 0))
+            num_text_rect = num_text_surf.get_rect(center=rect.center)
+            
+            # Draw the number on the card
+            screen.blit(num_text_surf, num_text_rect)
 
     if len(matched_cards) == len(card_images):
         game_over = True
