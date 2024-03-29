@@ -1,6 +1,7 @@
 import pygame
 import sys
 import random
+import time
 
 def select_difficulty(screen, button_font):
     title_font = pygame.font.SysFont(None, 60)  # Increased font size for the title
@@ -102,6 +103,7 @@ background_image = pygame.transform.scale(background_image, (screen_width, scree
 card_images = [pygame.transform.scale(pygame.image.load(f'image{i}.png'), card_size) for i in range(1, 7)] * 2
 success_sound = pygame.mixer.Sound('success.mp3')
 failure_sound = pygame.mixer.Sound('failure.mp3')
+flip_sound = pygame.mixer.Sound('flip.mp3')
 random.shuffle(card_images)
 
 
@@ -152,14 +154,18 @@ while running:
                 index = row * cards_horizontal + column
                 if 0 <= column < cards_horizontal and 0 <= row < cards_vertical and index not in matched_cards and index not in selected_cards:
                     selected_cards.append(index)
+                    if len(selected_cards) >= 1:
+                        flip_sound.play()
                     if len(selected_cards) == 2:
                         if card_images[selected_cards[0]] == card_images[selected_cards[1]]:
                             matched_cards.extend(selected_cards)
+                            time.sleep(0.5)
                             success_sound.play()
                             if num_players == 2:
                                 current_player = 1 if current_player == 1 else 2
                             
                         else:
+                            time.sleep(0.5)
                             failure_sound.play()
                             current_player = 2 if current_player == 1 else 1
                         pygame.time.wait(500)
