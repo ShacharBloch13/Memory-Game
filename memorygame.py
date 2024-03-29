@@ -36,7 +36,7 @@ def select_difficulty(screen, button_font):
         pygame.display.flip()
 
 def select_number_of_players(screen, button_font):
-    options = ["1 Player", "2 Players"]
+    options = ["1 Player", "2 Players", "Time Attack"]
     options_rects = [pygame.Rect(screen_width / 2 - 100, 300 + i * 100, 200, 50) for i, _ in enumerate(options)]
     title_font = pygame.font.SysFont(None, 60)
     
@@ -44,7 +44,7 @@ def select_number_of_players(screen, button_font):
 
     while True:
         screen.fill(bg_color)
-        title_surf = title_font.render("Select Number of Players", True, button_text_color)
+        title_surf = title_font.render("Select Mode", True, button_text_color)
         screen.blit(title_surf, (screen_width / 2 - title_surf.get_width() / 2, 200))
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -63,6 +63,20 @@ def select_number_of_players(screen, button_font):
         
         pygame.display.flip()
 
+def display_countdown(screen, remaining_time, screen_width):
+    countdown_text = f"Time Left: {remaining_time}s"
+    countdown_surf = button_font.render(countdown_text, True, (255, 255, 255))
+    countdown_rect = countdown_surf.get_rect(topright=(screen_width - 10, 50))
+    screen.blit(countdown_surf, countdown_rect)
+
+def display_game_over_message():
+    overlay = pygame.Surface((screen_width, screen_height), pygame.SRCALPHA)
+    overlay.fill((0, 0, 0, 180))  # Semi-transparent overlay
+    screen.blit(overlay, (0, 0))
+    font = pygame.font.SysFont(None, 72)
+    text_surf = font.render('Loser!', True, (255, 215, 0))
+    text_rect = text_surf.get_rect(center=(screen_width / 2 + 130, screen_height / 2 + 130))
+    screen.blit(text_surf, text_rect)
 
 pygame.init()
 pygame.mixer.init()
@@ -107,7 +121,40 @@ flip_sound = pygame.mixer.Sound('flip.mp3')
 random.shuffle(card_images)
 
 
-num_players = select_number_of_players(screen, button_font)
+mode = select_number_of_players(screen, button_font)
+time_limit = 60 if mode == 3 else None
+time_passed = 0
+
+# In the main game loop, adjust the game logic based on the selected mode
+if mode == 3: 
+    start_ticks = pygame.time.get_ticks()
+    current_time = pygame.time.get_ticks()
+    time_passed = (current_time - start_ticks) // 1000
+    if time_passed > time_limit:
+        game_over = True
+        if game_over and play_again_button_rect.collidepoint(pygame.mouse.get_pos()) and event.type == pygame.MOUSEBUTTONDOWN:
+            # Reset the game state for 'Time Attack' mode
+            game_over = False
+            matched_cards = []
+            selected_cards = []
+            start_ticks = pygame.time.get_ticks()
+            random.shuffle(card_images)
+            time_limit = 60
+        #if game_over:
+            font = pygame.font.SysFont(None, 72)
+            overlay = pygame.Surface((screen_width, screen_height), pygame.SRCALPHA)
+            overlay.fill((0, 0, 0, 128))  # Adjust the alpha to make it more or less transparent
+            screen.blit(overlay, (0, 0))
+
+            
+
+
+    
+
+
+
+
+
 current_player = 1  # Tracks the current player (1 or 2)
 player_turns = {1: "Player 1's Turn", 2: "Player 2's Turn"}
 card_images = [pygame.transform.scale(pygame.image.load(f'image{i}.png'), (100, 100)) for i in range(1, image_count + 1)] * 2
@@ -161,7 +208,7 @@ while running:
                             matched_cards.extend(selected_cards)
                             time.sleep(0.5)
                             success_sound.play()
-                            if num_players == 2:
+                            if mode == 2:
                                 current_player = 1 if current_player == 1 else 2
                             
                         else:
@@ -170,9 +217,44 @@ while running:
                             current_player = 2 if current_player == 1 else 1
                         pygame.time.wait(500)
                         selected_cards = []
+    if game_over and mode == 3:
+        if len(matched_cards) == len(card_images):  # If the player completed the board
+            time_limit -= 5  # Decrease time limit for the next game
+            start_ticks = pygame.time.get_ticks()  # Restart the timer
+            # Reset game state for a new round
+            game_over = False
+            matched_cards = []
+            selected_cards = []
+            random.shuffle(card_images)
+        else:
+            # Display "You Lost" message and "Play Again" option
+            # Handle "Play Again" button press
+            display_game_over_message()
+            if play_again_button_rect.collidepoint(pygame.mouse.get_pos()):
+                time_limit = 60  # Reset time limit
+                start_ticks = pygame.time.get_ticks()  # Restart the timer
+                game_over = False
+                matched_cards = []
+                selected_cards = []
+                random.shuffle(card_images)
+
+    if mode == 3 and not game_over:
+        current_time = pygame.time.get_ticks()
+        time_passed = (current_time - start_ticks) // 1000  # Convert milliseconds to seconds
+        remaining_time = time_limit - time_passed
+        display_countdown(screen, remaining_time, screen_width) #important!!!!
+
+        if remaining_time <= 0:
+            game_over = True
+            display_game_over_message()
+
+
+    # else:
+    #     display_countdown(screen, remaining_time, screen_width)
+
 
         # Right after processing MOUSEBUTTONDOWN events and before drawing the cards
-    if num_players == 2 and not game_over:
+    if mode == 2 and not game_over:
         turn_text = player_turns[current_player]  # Get the current player's turn text
         turn_text_surf = button_font.render(turn_text, True, button_text_color)
         # Position it in the top right corner. Adjust the positioning as needed.
