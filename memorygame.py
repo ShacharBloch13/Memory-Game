@@ -40,7 +40,7 @@ def select_difficulty(screen, button_font):
         
         pygame.display.flip()
 
-def select_number_of_players(screen, button_font):
+def select_mode(screen, button_font):
     options = ["1 Player", "2 Players", "Time Attack", "Voice Control"]
     options_rects = [pygame.Rect(screen_width / 2 - 100, 300 + i * 100, 200, 50) for i, _ in enumerate(options)]
     title_font = pygame.font.SysFont(None, 60)
@@ -101,11 +101,13 @@ def check_cards_match():
     if len(selected_cards) == 2:
         if card_images[selected_cards[0]] == card_images[selected_cards[1]]:
             matched_cards.extend(selected_cards)
+            success_sound.play()
             print("Matched cards!")  # Debugging
             if len(matched_cards) == len(card_images):
                 game_over = True
         else:
             print("Cards did not match!")  # Debugging
+            failure_sound.play()
         selected_cards = []
         
 
@@ -124,6 +126,7 @@ def voice_control_thread():
 
 def process_voice_commands():
     global selected_cards, voice_commands, matched_cards, game_over
+    
     while voice_commands:
         command = voice_commands.pop(0)  # Process each command
         if isinstance(command, int):
@@ -131,6 +134,7 @@ def process_voice_commands():
                 selected_card_index = command - 1
                 if selected_card_index not in selected_cards and selected_card_index not in matched_cards:
                     selected_cards.append(selected_card_index)
+                    flip_sound.play()
                     print(f"Selected card {command} via voice")
                     # Check for a match or reset selected cards after a delay
                     if len(selected_cards) == 2:
@@ -176,6 +180,7 @@ play_again_button_rect = pygame.Rect(screen_width / 2 - 70, screen_height / 2, 1
 difficulty = select_difficulty(screen, button_font)
 image_count = 6 if difficulty == "Easy" else 8 if difficulty == "Mid" else 10
 
+
 card_size = (100, 100)
 cards_horizontal = 4
 cards_vertical = 3
@@ -194,27 +199,31 @@ stream = None
 
 background_image = pygame.image.load('nuggets.png')
 background_image = pygame.transform.scale(background_image, (screen_width, screen_height))
-card_images = [pygame.transform.scale(pygame.image.load(f'image{i}.png'), card_size) for i in range(1, 7)] * 2
+card_images = [pygame.transform.scale(pygame.image.load(f'image{i}.png'), card_size) for i in range(1, image_count+1)] * 2
 success_sound = pygame.mixer.Sound('success.mp3')
 failure_sound = pygame.mixer.Sound('failure.mp3')
 flip_sound = pygame.mixer.Sound('flip.mp3')
 random.shuffle(card_images)
 
 
-mode = select_number_of_players(screen, button_font)
+mode = select_mode(screen, button_font)
 time_limit = 60 if mode == 3 else None
 time_passed = 0
 
 
 if mode == 4:  # 1 Player mode with voice control
+    print (image_count) #debugging
+    card_images = [pygame.transform.scale(pygame.image.load(f'image{i}.png'), card_size) for i in range(1, image_count + 1)] * 2
+    random.shuffle(card_images)
+
     init_vosk()
+    
     running = True
     voice_control_enabled = True
     voice_control_thread_instance = threading.Thread(target=voice_control_thread, daemon=True)
     voice_control_thread_instance.start()
 
     start_ticks = pygame.time.get_ticks()
-
     while running:
         screen.blit(background_image, (0, 0))
         seconds = (pygame.time.get_ticks() - start_ticks) // 1000
@@ -222,6 +231,7 @@ if mode == 4:  # 1 Player mode with voice control
         seconds = seconds % 60
 
         process_voice_commands()  # Process voice commands for selecting cards
+        
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -244,18 +254,10 @@ if mode == 4:  # 1 Player mode with voice control
                     index = row * cards_horizontal + column
                     if 0 <= column < cards_horizontal and 0 <= row < cards_vertical and index not in matched_cards and index not in selected_cards:
                         selected_cards.append(index)
-                        if len(selected_cards) == 2:
-                            if card_images[selected_cards[0]] == card_images[selected_cards[1]]:
-                                matched_cards.extend(selected_cards)
-                                success_sound.play()
-                            else:
-                                failure_sound.play()
-                                pygame.time.wait(500)  # Wait half a second
-                            selected_cards = []
-
+                        
+                        
         if game_over:
-            display_game_over_message()
-            if play_again_button_rect.collidepoint(pygame.mouse.get_pos()):
+            if event.type == pygame.MOUSEBUTTONDOWN and play_again_button_rect.collidepoint(event.pos):
                 game_over = False
                 matched_cards = []
                 selected_cards = []
@@ -270,9 +272,15 @@ if mode == 4:  # 1 Player mode with voice control
                     screen.blit(card_images[index], rect)
                 else:
                     pygame.draw.rect(screen, hidden_card_color, rect)
+                card_number_text = f"{index + 1}"  # Generate the card number text
+                num_font = pygame.font.SysFont(None, 24)  # Choose an appropriate font size
+                num_text_surf = num_font.render(card_number_text, True, (0, 0, 0))  # Create the text surface
+                num_text_rect = num_text_surf.get_rect(center=rect.center)  # Center the text on the card
+                screen.blit(num_text_surf, num_text_rect)  # Draw the text surface on the screen
 
         if len(matched_cards) == len(card_images):
             game_over = True
+            font = pygame.font.SysFont(None, 72)
             text_surf = font.render('Well done!', True, (255, 215, 0))
             text_rect = text_surf.get_rect(center=(screen_width / 2, (screen_height / 2) -50))
             screen.blit(text_surf, text_rect)
