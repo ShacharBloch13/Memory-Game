@@ -2,6 +2,11 @@ import pygame
 import sys
 import random
 import time
+from vosk import Model, KaldiRecognizer
+import pyaudio
+import os
+import json
+import threading
 
 def select_difficulty(screen, button_font):
     title_font = pygame.font.SysFont(None, 60)  # Increased font size for the title
@@ -36,7 +41,7 @@ def select_difficulty(screen, button_font):
         pygame.display.flip()
 
 def select_number_of_players(screen, button_font):
-    options = ["1 Player", "2 Players", "Time Attack"]
+    options = ["1 Player", "2 Players", "Time Attack", "Voice Control"]
     options_rects = [pygame.Rect(screen_width / 2 - 100, 300 + i * 100, 200, 50) for i, _ in enumerate(options)]
     title_font = pygame.font.SysFont(None, 60)
     
@@ -78,12 +83,83 @@ def display_game_over_message():
     text_rect = text_surf.get_rect(center=(screen_width / 2 + 130, screen_height / 2 + 130))
     screen.blit(text_surf, text_rect)
 
+def init_vosk():
+    global recognizer, stream
+    model_path = r"C:\Users\user\Desktop\IDC\YEAR_3\From An Idea To Application\HW\HW1\Memory-Game\vosk-model-small-en-us-0.15"
+  # Update with your actual path
+    if not os.path.exists(model_path):
+        print("Please download the model from the VOSK website and place it in the specified directory.")
+        exit(1)
+    model = Model(model_path)
+    recognizer = KaldiRecognizer(model, 16000)
+    pa = pyaudio.PyAudio()
+    stream = pa.open(format=pyaudio.paInt16, channels=1, rate=16000, input=True, frames_per_buffer=8192)
+    stream.start_stream()
+
+def check_cards_match():
+    global selected_cards, matched_cards, game_over
+    if len(selected_cards) == 2:
+        if card_images[selected_cards[0]] == card_images[selected_cards[1]]:
+            matched_cards.extend(selected_cards)
+            print("Matched cards!")  # Debugging
+            if len(matched_cards) == len(card_images):
+                game_over = True
+        else:
+            print("Cards did not match!")  # Debugging
+        selected_cards = []
+        
+
+def voice_control_thread():
+    global recognizer, stream, voice_commands, voice_control_enabled
+    while voice_control_enabled:
+        data = stream.read(4096, exception_on_overflow=False)
+        if recognizer.AcceptWaveform(data):
+            result = json.loads(recognizer.Result())
+            text = result.get("text", "").strip().lower()  # Convert to lower case for matching
+            print(f"Voice Control Thread recognized: {text}")  # Debugging
+            if text in number_words_to_digits:  # Check if the text is a recognized number word
+                command = number_words_to_digits[text]
+                voice_commands.append(command)
+                print(f"Appending command: {command}")  # Debugging
+
+def process_voice_commands():
+    global selected_cards, voice_commands, matched_cards, game_over
+    while voice_commands:
+        command = voice_commands.pop(0)  # Process each command
+        if isinstance(command, int):
+            if 1 <= command <= len(card_images):  # Validate command range
+                selected_card_index = command - 1
+                if selected_card_index not in selected_cards and selected_card_index not in matched_cards:
+                    selected_cards.append(selected_card_index)
+                    print(f"Selected card {command} via voice")
+                    # Check for a match or reset selected cards after a delay
+                    if len(selected_cards) == 2:
+                        pygame.time.wait(1000)  # Delay for user to see the cards
+                        check_cards_match()
+        elif isinstance(command, str) and command == "reset":
+            # Example reset functionality, adapt as needed
+            reset_game()
+
+def reset_game():
+    global selected_cards, matched_cards, game_over
+    selected_cards = []
+    matched_cards = []
+    game_over = False
+
 pygame.init()
 pygame.mixer.init()
 
 screen_width, screen_height = 900, 675
 screen = pygame.display.set_mode((screen_width, screen_height))
 
+
+number_words_to_digits = {
+    "one": 1, "two": 2, "three": 3, "for": 4 , "five": 5, #when i say "four" it recognizes it as "for"
+    "six": 6, "seven": 7, "eight": 8, "nine": 9, "ten": 10,
+    "eleven": 11, "twelve": 12, "thirteen": 13, "fourteen": 14,
+    "fifteen": 15, "sixteen": 16, "seventeen": 17, "eighteen": 18,
+    "nineteen": 19, "twenty": 20
+}
 
 
 
@@ -109,6 +185,10 @@ cards = []
 selected_cards = []
 matched_cards = []
 game_over = False
+voice_commands = []
+voice_control_enabled = False
+recognizer = None
+stream = None
 
 
 
@@ -124,6 +204,99 @@ random.shuffle(card_images)
 mode = select_number_of_players(screen, button_font)
 time_limit = 60 if mode == 3 else None
 time_passed = 0
+
+
+if mode == 4:  # 1 Player mode with voice control
+    init_vosk()
+    running = True
+    voice_control_enabled = True
+    voice_control_thread_instance = threading.Thread(target=voice_control_thread, daemon=True)
+    voice_control_thread_instance.start()
+
+    start_ticks = pygame.time.get_ticks()
+
+    while running:
+        screen.blit(background_image, (0, 0))
+        seconds = (pygame.time.get_ticks() - start_ticks) // 1000
+        minutes = seconds // 60
+        seconds = seconds % 60
+
+        process_voice_commands()  # Process voice commands for selecting cards
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+                voice_control_enabled = False  # Ensure to stop the voice control thread
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                mouse_pos = event.pos
+                if reset_button_rect.collidepoint(mouse_pos) or (game_over and play_again_button_rect.collidepoint(mouse_pos)):
+                    selected_cards = []
+                    matched_cards = []
+                    game_over = False
+                    start_ticks = pygame.time.get_ticks()
+                    random.shuffle(card_images)
+                    continue
+
+                if not game_over:
+                    x, y = mouse_pos
+                    column = x // (card_size[0] + margin)
+                    row = (y - top_offset) // (card_size[1] + margin)
+                    index = row * cards_horizontal + column
+                    if 0 <= column < cards_horizontal and 0 <= row < cards_vertical and index not in matched_cards and index not in selected_cards:
+                        selected_cards.append(index)
+                        if len(selected_cards) == 2:
+                            if card_images[selected_cards[0]] == card_images[selected_cards[1]]:
+                                matched_cards.extend(selected_cards)
+                                success_sound.play()
+                            else:
+                                failure_sound.play()
+                                pygame.time.wait(500)  # Wait half a second
+                            selected_cards = []
+
+        if game_over:
+            display_game_over_message()
+            if play_again_button_rect.collidepoint(pygame.mouse.get_pos()):
+                game_over = False
+                matched_cards = []
+                selected_cards = []
+                random.shuffle(card_images)
+                start_ticks = pygame.time.get_ticks()
+
+        for x in range(cards_horizontal):
+            for y in range(cards_vertical):
+                rect = pygame.Rect(x * (card_size[0] + margin) + margin, y * (card_size[1] + margin) + margin + top_offset, *card_size)
+                index = y * cards_horizontal + x
+                if index in matched_cards or index in selected_cards:
+                    screen.blit(card_images[index], rect)
+                else:
+                    pygame.draw.rect(screen, hidden_card_color, rect)
+
+        if len(matched_cards) == len(card_images):
+            game_over = True
+            text_surf = font.render('Well done!', True, (255, 215, 0))
+            text_rect = text_surf.get_rect(center=(screen_width / 2, (screen_height / 2) -50))
+            screen.blit(text_surf, text_rect)
+
+            pygame.draw.rect(screen, play_again_button_color, play_again_button_rect)
+            play_again_text_surf = button_font.render('Play Again', True, button_text_color)
+            play_again_text_rect = play_again_text_surf.get_rect(center=play_again_button_rect.center)
+            screen.blit(play_again_text_surf, play_again_text_rect)
+
+        pygame.draw.rect(screen, reset_button_color, reset_button_rect)
+        reset_text_surf = button_font.render('Reset', True, button_text_color)
+        reset_text_rect = reset_text_surf.get_rect(center=reset_button_rect.center)
+        screen.blit(reset_text_surf, reset_text_rect)
+
+        timer_surf = button_font.render(f'Time: {minutes:02}:{seconds:02}', True, button_text_color)
+        timer_rect = timer_surf.get_rect(topleft=(10, 10))
+        screen.blit(timer_surf, timer_rect)
+
+        pygame.display.flip()
+
+    stream.stop_stream()
+    stream.close()
+    pygame.quit()
+
 
 # In the main game loop, adjust the game logic based on the selected mode
 if mode == 3: 
