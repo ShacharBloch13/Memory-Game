@@ -9,7 +9,7 @@ The Denver Nuggets Memory Game is an interactive Python-based application design
 This project utilizes a variety of technologies to create an interactive and engaging user experience:
 1. Python: The core programming language used for game logic and structure.
 2. Pygame: A Python library for creating video games, providing functionalities for game graphics and sounds.
-3. osk: An open-source speech recognition toolkit. Version 0.15 is specifically used for its compatibility and performance.
+3. Vosk: An open-source speech recognition toolkit. Version 0.15 is specifically used for its compatibility and performance.
 4. PyAudio: Enables voice input by interfacing with the computer's microphone, working in tandem with Vosk for speech recognition capabilities.
 These technologies were chosen for their reliability, ease of use, and strong community support, making them ideal for developing a project like the Denver Nuggets Memory Game.
 
