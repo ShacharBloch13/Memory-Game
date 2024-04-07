@@ -23,11 +23,11 @@ To run the Denver Nuggets Memory Game, you will need:
 
 # Installation
 1. Clone the repository or download source code
-'''git clone https://yourrepositorylink.com/denvernuggetsmemorygame.git'''
+```git clone https://yourrepositorylink.com/denvernuggetsmemorygame.git```
 2. Install the required Python libraries. Navigate to the game's directory in your terminal or command prompt and execute the following commands:
-''' pip install pygame
-    pip install pyaudio
-    pip install vosk==0.15 '''
+``` pip install pygame```
+``` pip install pyaudio```
+``` pip install vosk==0.15 ```
 
 # How to play
 1. Launch the Game: Execute memorygame.py to start.
