@@ -5,7 +5,7 @@ The Denver Nuggets Memory Game is an interactive Python-based application design
 2. Speech Recognition: Interact with the game using your voice for a hands-free experience.
 3. Pygame Graphics: Enjoy engaging visuals created with the Pygame library.
 
-#Technology used
+# Technology used
 This project utilizes a variety of technologies to create an interactive and engaging user experience:
 1. Python: The core programming language used for game logic and structure.
 2. Pygame: A Python library for creating video games, providing functionalities for game graphics and sounds.
@@ -13,7 +13,7 @@ This project utilizes a variety of technologies to create an interactive and eng
 4. PyAudio: Enables voice input by interfacing with the computer's microphone, working in tandem with Vosk for speech recognition capabilities.
 These technologies were chosen for their reliability, ease of use, and strong community support, making them ideal for developing a project like the Denver Nuggets Memory Game.
 
-#Requirments
+# Requirments
 To run the Denver Nuggets Memory Game, you will need:
 1. Python 3.6 or higher
 2. Pygame
@@ -21,7 +21,7 @@ To run the Denver Nuggets Memory Game, you will need:
 4. PyAudio
 5. Working microphone (for specch recognition)
 
-#Installation
+# Installation
 1. Clone the repository or download source code
 '''git clone https://yourrepositorylink.com/denvernuggetsmemorygame.git'''
 2. Install the required Python libraries. Navigate to the game's directory in your terminal or command prompt and execute the following commands:
@@ -29,7 +29,7 @@ To run the Denver Nuggets Memory Game, you will need:
     pip install pyaudio
     pip install vosk==0.15 '''
 
-#How to play
+# How to play
 1. Launch the Game: Execute memorygame.py to start.
 2. Choose Difficulty: Select a difficulty level using either voice commands or keyboard inputs.
 3. Game Objective: Find and match all pairs of Denver Nuggets-themed cards. The game will track your progress by moves and time.
@@ -37,6 +37,6 @@ To run the Denver Nuggets Memory Game, you will need:
 5. For Voice Control mode, just say the card number you wish to draw.
 
 
-#Additional info
+# Additional info
 Contributing: If you're interested in contributing to the development of the game, feel free to fork the repository and submit your pull requests.
 
