@@ -85,8 +85,8 @@ def display_game_over_message():
 
 def init_vosk():
     global recognizer, stream
-    model_path = r"C:\Users\user\Desktop\IDC\YEAR_3\From An Idea To Application\HW\HW1\Memory-Game\vosk-model-small-en-us-0.15"
-  # Update with your actual path
+      # Update with your actual path
+    model_path = r"C:\Users\user\Desktop\IDC\YEAR_3\From An Idea To Application\HW\HW1\Memory-Game\vosk-model-small-en-us-0.15" # update with your actual path
     if not os.path.exists(model_path):
         print("Please download the model from the VOSK website and place it in the specified directory.")
         exit(1)
@@ -150,6 +150,9 @@ def reset_game():
     matched_cards = []
     game_over = False
 
+
+   
+    
 pygame.init()
 pygame.mixer.init()
 
@@ -270,13 +273,14 @@ if mode == 4:  # 1 Player mode with voice control
                 index = y * cards_horizontal + x
                 if index in matched_cards or index in selected_cards:
                     screen.blit(card_images[index], rect)
+                    
                 else:
                     pygame.draw.rect(screen, hidden_card_color, rect)
-                card_number_text = f"{index + 1}"  # Generate the card number text
-                num_font = pygame.font.SysFont(None, 24)  # Choose an appropriate font size
-                num_text_surf = num_font.render(card_number_text, True, (0, 0, 0))  # Create the text surface
-                num_text_rect = num_text_surf.get_rect(center=rect.center)  # Center the text on the card
-                screen.blit(num_text_surf, num_text_rect)  # Draw the text surface on the screen
+                    card_number_text = f"{index + 1}"  # Generate the card number text
+                    num_font = pygame.font.SysFont(None, 24)  # Choose an appropriate font size
+                    num_text_surf = num_font.render(card_number_text, True, (0, 0, 0))  # Create the text surface
+                    num_text_rect = num_text_surf.get_rect(center=rect.center)  # Center the text on the card
+                    screen.blit(num_text_surf, num_text_rect)  # Draw the text surface on the screen
 
         if len(matched_cards) == len(card_images):
             game_over = True
@@ -449,13 +453,13 @@ while running:
                 pygame.draw.rect(screen, hidden_card_color, rect)
                 card_number_text = f"{index + 1}"
             
-            # Create a text surface for the number
-            num_font = pygame.font.SysFont(None, 24)  # Smaller font for the number
-            num_text_surf = num_font.render(card_number_text, True, (0, 0, 0))
-            num_text_rect = num_text_surf.get_rect(center=rect.center)
-            
-            # Draw the number on the card
-            screen.blit(num_text_surf, num_text_rect)
+                # Create a text surface for the number
+                num_font = pygame.font.SysFont(None, 24)  # Smaller font for the number
+                num_text_surf = num_font.render(card_number_text, True, (0, 0, 0))
+                num_text_rect = num_text_surf.get_rect(center=rect.center)
+                
+                # Draw the number on the card
+                screen.blit(num_text_surf, num_text_rect)
 
     if len(matched_cards) == len(card_images):
         game_over = True
