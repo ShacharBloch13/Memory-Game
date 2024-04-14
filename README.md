@@ -1,4 +1,7 @@
 # Denver Nuggets Memory Game
+
+```https://youtu.be/fPSX9fqm4JI```
+
 The Denver Nuggets Memory Game is an interactive Python-based application designed to provide users with a fun and engaging way to test their memory. Themed around the Denver Nuggets basketball team, players will encounter various team-related elements throughout the game. Incorporating advanced features like speech recognition, the game offers multiple difficulty levels to accommodate everyone from beginners to experienced players.
 # Features
 1. Multiple Difficulty Levels: Choose from Easy, Mid, or Hard to challenge your memory.
